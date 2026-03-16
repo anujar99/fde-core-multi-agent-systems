@@ -156,21 +156,34 @@ def extended_uluru_exercise():
         "Arrernte Language Specialist",
         "Pitjantjatjara Language Specialist",
         "Knowledge Base Lookup",
-        # TODO: Add your new nodes here
+        
+        # Add your new nodes here
+        "Translation Verification Agent",
+        "Multimodal Media Tool",
+        "Feedback Collector",
+        "Cultural Sensitivity Checker"
     ]
     
     edges = [
         ("Visitor Input", "Language Identification"),
         ("Language Identification", "Arrernte Language Specialist"),
         ("Language Identification", "Pitjantjatjara Language Specialist"),
-        ("Arrernte Language Specialist", "Knowledge Base Lookup"),
-        ("Pitjantjatjara Language Specialist", "Knowledge Base Lookup"),
-        ("Knowledge Base Lookup", "Arrernte Language Specialist"),
-        ("Knowledge Base Lookup", "Pitjantjatjara Language Specialist"),
-        ("Arrernte Language Specialist", "Language Identification"),
-        ("Pitjantjatjara Language Specialist", "Language Identification"),
         ("Language Identification", "Visitor Input"),
-        # TODO: Add your new edges here
+        
+        # Add your new edges here
+        ("Arrernte Language Specialist", "Translation Verification Agent"),
+        ("Pitjantjatjara Language Specialist", "Translation Verification Agent"),
+        ("Translation Verification Agent", "Language Identification"),
+        
+        ("Knowledge Base Lookup", "Multimodal Media Tool"),
+        ("Multimodal Media Tool", "Arrernte Language Specialist"),
+        ("Multimodal Media Tool", "Pitjantjatjara Language Specialist"),
+        
+        ("Knowledge Base Lookup", "Cultural Sensitivity Checker"),
+        ("Cultural Sensitivity Checker", "Arrernte Language Specialist"),
+        ("Cultural Sensitivity Checker", "Pitjantjatjara Language Specialist"),
+
+        ("Visitor Input", "Feedback Collector"),
     ]
     
     node_types = {
@@ -179,12 +192,19 @@ def extended_uluru_exercise():
         "Arrernte Language Specialist": "agent",
         "Pitjantjatjara Language Specialist": "agent",
         "Knowledge Base Lookup": "tool",
-        # TODO: Add types for your new nodes here
+        
+        # Add types for your new nodes here
+        "Translation Verification Agent": "agent",
+        "Multimodal Media Tool": "tool",
+        "Feedback Collector": "tool",
+        "Cultural Sensitivity Checker": "tool",
     }
 
     edge_labels = {
         ("Language Identification", "Visitor Input"): "Formatted Response",
-        # TODO: Add new edge labels here
+        
+        # Add new edge labels here
+        ("Visitor Input", "Feedback Collector"): "Improve Future Responses",
     }
 
     create_diagram(
