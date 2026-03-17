@@ -55,7 +55,26 @@ def record_distribution(penguin_name: str, food: int, has_tool: bool) -> str:
 # --- EXAMPLE TOOL (Student can change) ---
 @tool
 def find_food(penguin_name: str, method: str) -> int:
-    pass
+    """
+    Given a method of finding food, this function randomly selects a number
+    and returns it to indicate the food that was found by the penguin.
+
+    Args:
+        penguin_name (str): The penguin that needs to find food.
+        method (str): The method that the penguin will use to find food.
+
+    Returns:
+        Int: A number representing the food that the penguin found.
+                0 is the method isn't supported.
+                1-2 (inclusive) is foraging.
+                3-6 (inclusive) is fishing.
+    """
+    if method.lower() == "foraging":
+        return random.randint(1,2)
+    elif method.lower() == "fishing":
+        return random.randint(3,6)
+    else:
+        return 0
 
 
 class ScientistAgent(ToolCallingAgent):
@@ -238,7 +257,21 @@ class PenguinAgent(ToolCallingAgent):
         #    (e.g., "I need food," or "I'd like a tool.").
         # 3. The LLM's final text after using a tool should be simple (e.g., "Okay, I tried fishing.")
         prompt = f"""
-        
+                You are a penguin that can ask a scientist for food or a tool. If the
+                scientist doesn't give you food or a tool, you need to find food on your own.
+                You have two options for how to find food - foraging or fishing. To find the
+                food, you must use the find_food tool and tell it your 'penguin_name' ({self.name})
+                and the 'method' ('fishing' or 'foraging') that you want to use to find food.
+                You cannot use any other method of finding food.
+                If your food level ({self.food}) is low (0-1), you should prefer fishing using find_food.
+                If your food level is moderate (2-6), try foraging for food.
+                If your food level is high (6-10), request a tool from the scientinst or be cheeky and request food from the scientist.
+                If your food level is 10+, you should request a tool.
+                Make smart decision based on the current state and your penguin memory.
+                If you want to request food or a tool from the scientist, you should just output
+                text (e.g., "I'm {self.name} and I need food from you!" or "I'm {self.name} and I'd like a tool to play with!").
+                Your final text after finding food for yourself should be simple i.e. "I'm {self.name}, I tried fishing".
+                Also, speak like a penguin would speak english.
                 """
         # --- END STUDENT TASK ---
         
