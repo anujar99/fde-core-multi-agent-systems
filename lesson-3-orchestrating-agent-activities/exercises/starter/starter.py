@@ -322,17 +322,16 @@ class Orchestrator(ToolCallingAgent):
         # TODO: Learner needs to expand this prompt to handle the new diagnosis categories
         # and guide the LLM to use the new tools for events and maintenance.
         orchestrator_prompt = f"""
-        You are the main Orchestrator.
-        Customer request: "{user_request}"
-        Diagnosis: "{diagnosis}".
-        Available tools: {json.dumps([t.name for t in self.tools])}.
+        You are the main Orchestrator for a skate park and shop.
+        A customer's request is "{user_request}"
+        The support agent before you has made the following diagnosis: "{diagnosis}".
 
         Based on the request and diagnosis, decide which tool to use.
-        - For "{self.customer_support_agent.possible_categories[0]}" (Skateboard Inquiry), use 'get_item_inventory_level' or 'sell_item_from_inventory'.
-        - For "{self.customer_support_agent.possible_categories[1]}" (Session Booking), use 'check_booking_availability' then 'add_new_booking'.
-        - For "{self.customer_support_agent.possible_categories[2]}" (List Bookings), use 'get_all_bookings_for_date'.
-        - For "{self.customer_support_agent.possible_categories[4]}" (Event Inquiry), use 'list_upcoming_events' or 'create_new_event' if details are provided for a new event. Ask for clarification if event details are missing when trying to use 'create_new_event'.
-        - For "{self.customer_support_agent.possible_categories[5]}" (Maintenance Request), use 'log_maintenance_request' or 'view_maintenance_log'. Ask for clarification if maintenance request details are missing when trying to use 'log_maintenance_request'.
+        - If {diagnosis} is "{self.customer_support_agent.possible_categories[0]}" (Skateboard Inquiry), use 'get_item_inventory_level' or 'sell_item_from_inventory'.
+        - If {diagnosis} is "{self.customer_support_agent.possible_categories[1]}" (Session Booking), use 'check_booking_availability' then 'add_new_booking'.
+        - If {diagnosis} is "{self.customer_support_agent.possible_categories[2]}" (List Bookings), use 'get_all_bookings_for_date'.
+        - If {diagnosis} is "{self.customer_support_agent.possible_categories[4]}" (Event Inquiry), use 'list_upcoming_events' or 'create_new_event' if details are provided for a new event. Ask for clarification if event details are missing when trying to use 'create_new_event'.
+        - If {diagnosis} is "{self.customer_support_agent.possible_categories[5]}" (Maintenance Request), use 'log_maintenance_request' or 'view_maintenance_log'. Ask for clarification if maintenance request details are missing when trying to use 'log_maintenance_request'.
         
         If diagnosis is "{self.customer_support_agent.possible_categories[3]}" (Gear repair), respond with 'final_answer': "Regarding your gear: please bring it to the shop for assessment."
         If diagnosis is "{self.customer_support_agent.possible_categories[6]}" (Unknown/General) or info is missing for tools, use 'final_answer' to ask for clarification or state inability to help.
