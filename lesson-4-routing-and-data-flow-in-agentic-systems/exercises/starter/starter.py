@@ -105,7 +105,14 @@ def analyze_request_urgency(request: str) -> str:
     Returns:
         str: "urgent" if the request contains urgency indicators, "normal" otherwise.
     """
-    pass
+    urgency_keywords = [
+        'urgent', 'emergency', 'immediately', 'asap', 'right away', 'right now',
+        '紧急', '急需', '立即', '马上', '立刻', '赶快', '尽快', '迫切', '急迫'
+        ]
+    for kw in urgency_keywords:
+        if kw in request:
+            return "urgent"
+    return "normal"
 
 
 @tool
@@ -268,12 +275,16 @@ class UrgencyDetectorAgent(ToolCallingAgent):
     def get_llm_urgency_assessment(self, user_request: str) -> str:
         self.memory.steps = []
         prompt = f"""
-        Analyze the following customer request for urgency: "{user_request}"
+        You are an agent that is responsible for analyzing a customer request ({user_request}) and detecting whether it is
+        an 'urgent' request or a 'normal' request.
+
         Keywords like 'urgent', 'emergency', 'immediately', 'asap', 'right away', 'right now',
         '紧急', '急需', '立即', '马上', '立刻', '赶快', '尽快', '迫切', '急迫' often indicate urgency.
         
-        You MUST use the 'analyze_request_urgency' tool with the original request.
+        You MUST use the 'analyze_request_urgency' tool with the customer request (variable user_request: {user_request}).
         Your final response, using the 'final_answer' tool, MUST be the direct string output ("urgent" or "normal") from the 'analyze_request_urgency' tool's observation.
+        Search through your memory to grab the final answer.
+        If something goes wrong, default to returning 'normal' for the urgency status.
         """
         _ = self.run(prompt)
         urgency_assessment = "normal" 
@@ -292,7 +303,7 @@ class ChineseBankPostOfficeAgent(ToolCallingAgent):
     def __init__(self, model_to_use: OpenAIServerModel):
         self.request_analyzer = RequestAnalysisAgent(model_to_use)
         # TODO: Learner Task 3a: Instantiate the UrgencyDetectorAgent
-        self.urgency_detector: Optional[UrgencyDetectorAgent] = None # Placeholder
+        self.urgency_detector: Optional[UrgencyDetectorAgent] = UrgencyDetectorAgent(model_to_use)
         
         super().__init__(
             tools=[
@@ -324,14 +335,14 @@ class ChineseBankPostOfficeAgent(ToolCallingAgent):
         # Store the result ( "urgent" or "normal") in 'urgency_level'
         # And set 'is_urgent_bool' based on this.
         # Increment 'booking_manager.routing_accuracy["urgent_requests_identified_by_llm"]' if urgent.
-        urgency_level = "normal" # Placeholder
-        is_urgent_bool = False   # Placeholder
+        # urgency_level = "normal" # Placeholder
+        # is_urgent_bool = False   # Placeholder
         # Example of how it might be used:
-        # if self.urgency_detector:
-        #    urgency_level = self.urgency_detector.get_llm_urgency_assessment(request)
-        #    is_urgent_bool = urgency_level == "urgent"
-        #    if is_urgent_bool:
-        #        booking_manager.routing_accuracy["urgent_requests_identified_by_llm"] +=1
+        if self.urgency_detector:
+            urgency_level = self.urgency_detector.get_llm_urgency_assessment(request)
+            is_urgent_bool = urgency_level == "urgent"
+            if is_urgent_bool:
+                booking_manager.routing_accuracy["urgent_requests_identified_by_llm"] +=1
         print(f"LLM Assessed Urgency: '{urgency_level}' (NEEDS IMPLEMENTATION BY LEARNER)")
         
 
@@ -345,14 +356,18 @@ class ChineseBankPostOfficeAgent(ToolCallingAgent):
         # - Modify the instructions to ensure the LLM passes the 'is_urgent' boolean flag 
         #   (derived from 'urgency_level') to the chosen 'handle_*' tool.
         orchestrator_prompt = f"""
-        Orchestrator:
+        Orchestrator: You are the orchestrator for a chinese bank post office. Customer requests will come through and you have 
+        tools at your disposal to analyse each request's urgency before prioritising it and routing it to the chosen 'handle_*'
+        tool.
         Customer: '{customer_name}', Request: "{request}"
         Diagnosed Service: '{diagnosed_service_type}'. 
         {f"ASSESSED URGENCY: '{urgency_level}'." if self.urgency_detector else "Urgency detection not yet integrated."}
 
-        Task: Call the correct handler tool based on diagnosed_service_type.
-        If the request was assessed as urgent (current assessment: '{urgency_level}'), you MUST pass 'is_urgent': True to the handler tool. Otherwise, pass 'is_urgent': False.
-        Your available tools are: 'handle_deposit_request', 'handle_postal_request', 'handle_loan_request', 'handle_bill_payment_request', 'handle_international_transfer_request', 'handle_general_inquiry_request'.
+        Task: Call the correct handler 'handle_*' tool based on {diagnosed_service_type}.
+        If the request was assessed as urgent (current assessment: '{urgency_level}'), you MUST pass 'is_urgent': True to the handler tool.
+        Otherwise, pass 'is_urgent': False.
+        Your available tools are: 'handle_deposit_request', 'handle_postal_request', 'handle_loan_request', 'handle_bill_payment_request',
+                                    'handle_international_transfer_request', 'handle_general_inquiry_request'.
 
         Pass 'customer_name': '{customer_name}'.
         For 'handle_general_inquiry_request', also pass 'original_request': "{request}".
