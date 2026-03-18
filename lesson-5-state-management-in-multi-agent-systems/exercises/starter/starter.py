@@ -126,7 +126,21 @@ def purchase_fruit(user_id: str, fruit_name: str, quantity: int) -> str:
         A confirmation message with purchase details.
     """
     # TODO: Implement purchase recording with timestamps and pricing
-    pass
+    if fruit_name not in fruit_data.keys():
+        return "Error, the fruit does not exist in the database."
+    price = fruit_data[fruit_name]["price"]
+    cost = price * quantity
+    if user_id not in user_states.keys():
+        user_states[user_id] = {"preferences": [], "purchases": []}
+    user_states[user_id]["purchases"].append(
+        {
+            "timestamp": datetime.now().isoformat(),
+            "fruit_name": fruit_name,
+            "quantity": quantity,
+            "total_cost": cost
+        }
+    )
+    return f"Fruit successfully purchased - fruit: {fruit_name}, quantity: {quantity}, cost: {cost}"
 
 @tool
 def get_purchase_history(user_id: str) -> List[Dict]:
@@ -158,7 +172,21 @@ def get_purchase_summary(user_id: str) -> Dict:
         and most purchased fruit.
     """
     # TODO: Implement purchase summary calculation
-    pass
+    total_spent = 0
+    number_of_transactions = 0
+    favourite_fruit = "No purchases"
+    purchases = user_states.get(user_id, {}).get("purchases", [])
+    if purchases:
+        number_of_transactions = len(purchases)
+        for p in purchases:
+            total_spent += p["total_cost"]
+        purchases_count = Counter(p["fruit_name"] for p in purchases if "fruit_name" in p)
+        favourite_fruit = purchases_count.most_common(1)[0][0]
+    return {
+        "total_spent": total_spent,
+        "number_of_transactions": number_of_transactions,
+        "favourite_fruit": favourite_fruit
+    }
 
 # Specialized agents with real responsibilities
 
@@ -189,7 +217,7 @@ class PurchaseAgent(ToolCallingAgent):
     
     def __init__(self, model: OpenAIServerModel):
         super().__init__(
-            tools=[purchase_fruit, get_purchase_history],  # TODO: Add get_purchase_summary
+            tools=[purchase_fruit, get_purchase_history, get_purchase_summary],  # TODO: Add get_purchase_summary
             model=model,
             name="purchase_agent",
             description="Handles fruit purchases, purchase history, and purchase summaries.",
@@ -256,6 +284,8 @@ class Orchestrator(ToolCallingAgent):
             elif action == "history":
                 return self.purchases.run(f"Get purchase history for user {user_id}")
             # TODO: Add support for action == "summary"
+            elif action == "summary":
+                return self.purchases.run(f"Get purchases summary for user {user_id}")
             return "Invalid purchase action"
 
         super().__init__(
