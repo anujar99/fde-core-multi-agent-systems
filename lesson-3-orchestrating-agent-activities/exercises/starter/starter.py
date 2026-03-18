@@ -158,7 +158,17 @@ def create_new_event(event_name: str, date: str, description: str) -> str:
         str: A confirmation message.
     """
     # TODO: Implement this tool using event_system.add_event
-    pass
+    success_message = f"Successfully booked event {event_name} for date {date}."
+    failure_message = f"Was not able to book {event_name} for date {date} because there's a clash or some error happened."
+    try:
+        event_creation_status = event_system.add_event(event_name, date, description)
+        if event_creation_status:
+            return success_message
+        else:
+            return failure_message
+    except:
+        return failure_message
+    
 
 @tool
 def list_upcoming_events() -> str:
@@ -169,8 +179,12 @@ def list_upcoming_events() -> str:
         str: A string representation of the list of events, or a message if no events are scheduled.
     """
     # TODO: Implement this tool using event_system.list_events
-    pass
-
+    upcoming_events = event_system.list_events()
+    if len(upcoming_events) > 0:
+        return f"Upcoming events: {json.dumps(upcoming_events)}"
+    else:
+        return "There are no events scheduled."
+    
 @tool
 def log_maintenance_request(area: str, issue_description: str, reported_by: str) -> str:
     """
@@ -185,7 +199,12 @@ def log_maintenance_request(area: str, issue_description: str, reported_by: str)
         str: A confirmation message with the request ID.
     """
     # TODO: Implement this tool using maintenance_log.add_entry
-    pass
+    try:
+        request_id = maintenance_log.add_entry(area, issue_description, reported_by)
+        return f"Successfully logged a maintenance request for the issue '{issue_description}' in area {area}, reported by {reported_by}. The request ID is {request_id}."
+    except:
+        return f"Was not able to log a maintenance request for the issue '{issue_description}' in area {area}, reported by {reported_by}."
+
 
 @tool
 def view_maintenance_log() -> str:
@@ -196,7 +215,11 @@ def view_maintenance_log() -> str:
         str: A string representation of the maintenance log, or a message if the log is empty.
     """
     # TODO: Implement this tool using maintenance_log.view_log
-    pass
+    full_log = maintenance_log.view_log()
+    if len(full_log) > 0:
+        return f"The maintenance log: {json.dumps(full_log)}"
+    else:
+        return f"The maintenance log is empty!"
 
 @tool
 def submit_request_diagnosis(chosen_category: str, original_request_for_context: str) -> str:
@@ -308,8 +331,8 @@ class Orchestrator(ToolCallingAgent):
         - For "{self.customer_support_agent.possible_categories[0]}" (Skateboard Inquiry), use 'get_item_inventory_level' or 'sell_item_from_inventory'.
         - For "{self.customer_support_agent.possible_categories[1]}" (Session Booking), use 'check_booking_availability' then 'add_new_booking'.
         - For "{self.customer_support_agent.possible_categories[2]}" (List Bookings), use 'get_all_bookings_for_date'.
-        - For "{self.customer_support_agent.possible_categories[4]}" (Event Inquiry), use 'list_upcoming_events' or 'create_new_event' if details are provided for a new event.
-        - For "{self.customer_support_agent.possible_categories[5]}" (Maintenance Request), use 'log_maintenance_request' or 'view_maintenance_log'.
+        - For "{self.customer_support_agent.possible_categories[4]}" (Event Inquiry), use 'list_upcoming_events' or 'create_new_event' if details are provided for a new event. Ask for clarification if event details are missing when trying to use 'create_new_event'.
+        - For "{self.customer_support_agent.possible_categories[5]}" (Maintenance Request), use 'log_maintenance_request' or 'view_maintenance_log'. Ask for clarification if maintenance request details are missing when trying to use 'log_maintenance_request'.
         
         If diagnosis is "{self.customer_support_agent.possible_categories[3]}" (Gear repair), respond with 'final_answer': "Regarding your gear: please bring it to the shop for assessment."
         If diagnosis is "{self.customer_support_agent.possible_categories[6]}" (Unknown/General) or info is missing for tools, use 'final_answer' to ask for clarification or state inability to help.
