@@ -720,24 +720,33 @@ def get_patient_info(patient_id: int, access_level: str = PrivacyLevel.AGENT) ->
         }
 
 @tool
-def find_similar_claims(claim: Dict, access_level: str = PrivacyLevel.AGENT) -> Dict:
+def find_similar_claims(patient_id: str, service_date: str, procedure_code: str, amount: float, access_level: str = PrivacyLevel.AGENT) -> Dict:
     """
     Find similar claims in the database using vector embedding similarity.
-    
+
     Args:
-        claim: The claim to find similar claims for
+        patient_id: The patient ID
+        service_date: The service date (YYYY-MM-DD)
+        procedure_code: The procedure code
+        amount: The claim amount in dollars
         access_level: The access level of the requester
-        
+
     Returns:
         Dictionary containing similar claims with similarity scores
     """
+    claim = {
+        'patient_id': patient_id,
+        'service_date': service_date,
+        'procedure_code': procedure_code,
+        'amount': amount,
+    }
     # Ensure vector claim search is initialized with the latest claims
     if not vector_claim_search.is_initialized:
         vector_claim_search.update_claims(list(database.claims.values()))
-    
+
     # Perform vector-based semantic search
     similar = vector_claim_search.search(claim, access_level)
-    
+
     return {
         'query_claim': claim,
         'results_count': len(similar),

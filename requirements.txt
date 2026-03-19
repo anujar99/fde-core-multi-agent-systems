@@ -2,4 +2,4 @@ matplotlib
 networkx
 smolagents
 numpy
-sklearn
+scikit-learn
