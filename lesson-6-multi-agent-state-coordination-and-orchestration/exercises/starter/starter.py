@@ -251,7 +251,7 @@ def add_to_production_queue(
         days_to_complete = 1
     elif priority == 2:
         days_to_complete = max(1, days_to_complete / 2)
-    estimated_delivery_date = datetime.now() + timedelta(days=days_to_complete)
+    estimated_delivery_date = datetime.now() + timedelta(days=(days_to_complete + 1))
     
     # 3. Create PastaOrder object and add to factory_state.production_queue
     new_pasta_order = PastaOrder(
@@ -260,6 +260,7 @@ def add_to_production_queue(
         quantity=quantity,
         priority=priority,
         customer_notes=customer_notes,
+        status='queued',
         estimated_delivery_date=estimated_delivery_date.date().isoformat()
     )
     factory_state.production_queue.append(new_pasta_order)
@@ -273,7 +274,8 @@ def add_to_production_queue(
     return {
         "success": True,
         "message": f"Succesfully placed the order for {quantity}kg of {pasta_shape}.",
-        "delivery_date": estimated_delivery_date.date()
+        "delivery_date": estimated_delivery_date.date(),
+        "status": "queued"
     }
 
 @tool
@@ -361,6 +363,7 @@ def prioritize_order(order_id: str, new_priority: int) -> Dict[str, Any]:
     elif new_priority == 2:
         days_to_complete = max(1, days_to_complete / 2)
     estimated_delivery_date = datetime.now() + timedelta(days=days_to_complete)
+    order.estimated_delivery_date = str(estimated_delivery_date)
 
     # 5. Return success status with new delivery date
     return {
