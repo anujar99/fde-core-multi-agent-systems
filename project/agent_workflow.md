@@ -50,6 +50,7 @@ flowchart TD
         direction TB
         S1["get_available_cash(date)\n→ get_cash_balance()"]
         S2["complete_sale(item_name, qty, price, date)\n→ get_stock_level()\n→ create_transaction('sales')\n→ get_supplier_delivery_date()"]
+        S3["get_financial_summary(date)\n→ generate_financial_report()"]
     end
 
     subgraph DB["🗄️ SQLite Database (munder_difflin.db)"]
@@ -102,10 +103,11 @@ Orchestrator: parse items + quantities + date
     │
     ├─3─▶ Ordering Agent
     │       ├─ get_available_cash(date)       → get_cash_balance()
-    │       └─ complete_sale(item, qty, price, date)
-    │                                         → get_stock_level()
-    │                                         → create_transaction('sales')
-    │                                         → get_supplier_delivery_date()
+    │       ├─ complete_sale(item, qty, price, date)
+    │       │                                 → get_stock_level()
+    │       │                                 → create_transaction('sales')
+    │       │                                 → get_supplier_delivery_date()
+    │       └─ get_financial_summary(date)    → generate_financial_report()
     │
     └─▶ Final response to customer
             (quote breakdown + delivery dates + any unfulfilled items)
